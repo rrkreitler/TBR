@@ -1,0 +1,14 @@
+﻿
+@model TweetBrowser.Pages.IndexModel
+
+<form asp-page="/Index" method="post">
+    <div class="form-actions no-color">
+        <p>
+            Find:
+            <input type="text" name="searchString" value="@Model.PaginationViewModel.SearchFilter" />
+            <input type="submit" value="Search" class="btn btn-default" 
+                   asp-route-searchVisible="@true" asp-route-searchString="@Model.PaginationViewModel.SearchFilter"/>
+            <a asp-page="/Index">Clear search results</a>
+        </p>
+    </div>
+</form>

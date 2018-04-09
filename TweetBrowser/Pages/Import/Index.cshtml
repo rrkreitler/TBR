@@ -1,0 +1,65 @@
+﻿@page
+@model TweetBrowser.Pages.Import.IndexModel
+@{
+    ViewData["Title"] = "Tweet Browser - Import";
+}
+<div class="row">
+    <div class="col-md-6">
+        <p>Use these options to retrieve messages from the remote archive. Specify a start/end date and time to limit the number of items imported.<br />The INSPECT option allows you to see how many items will be imported without actually adding them to the database.<br />The IMPORT option retrieves the items and adds any unique items to the database.</p>
+    </div>
+</div>
+<div class="row main-row">
+    <h2>Import</h2>
+    <form method="post">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label asp-for="StartDate" class="control-label"></label>
+                    <input asp-for="StartDate" class="form-control" />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label asp-for="StartTime" class="control-label"></label>
+                    <input asp-for="StartTime" class="form-control" />
+                    <span asp-validation-for="StartTime" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label asp-for="EndDate" class="control-label"></label>
+                    <input asp-for="EndDate" class="form-control" />
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <label asp-for="EndTime" class="control-label"></label>
+                    <input asp-for="EndTime" class="form-control" />
+                    <span asp-validation-for="EndTime" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-1">
+                <div class="form-group">
+                    <input type="submit" asp-page-handler="Inspect" value="Preview" class="btn btn-default" />
+                </div>
+            </div>
+            <div class="col-md-1">
+                <div class="form-group">
+                    <input type="submit" asp-page-handler="Import" value="Import" class="btn btn-default" />
+                </div>
+            </div>
+        </div>
+    </form>
+
+</div>
+<div class="row main-row">
+    @if (!String.IsNullOrWhiteSpace(Model.Status))
+    {
+        <p>@Model.Status</p>
+    }
+
+</div>

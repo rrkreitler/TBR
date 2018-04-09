@@ -1,0 +1,116 @@
+﻿@page
+@model TweetBrowser.Pages.IndexModel
+
+@{
+    ViewData["Title"] = "Tweet Browser - Messages";
+}
+<div class="row">
+    <div class="col-md-6 desc-text">
+        <p>Welcome to TweetBrowser. This application allows you to download messages from a Twitter archive. Once downloaded, you can browse the list using a variety of filter and search options.</p>
+    </div>
+    <div class="col-md-6 desc-text">
+        @if (Model.PaginationViewModel.ShowSearch)
+        {
+            @await Html.PartialAsync("SearchPartial")
+        }
+    </div>
+</div>
+<div class="row main-row">
+    <h2>Messages</h2>
+    @if (Model.LocalDataExists)
+    {
+        <div >
+            Showing @Model.PaginationViewModel.Range[0] - 
+            @Model.PaginationViewModel.Range[1] of  
+            @Model.PaginationViewModel.Range[2] items.
+        </div>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>
+                    @if (String.IsNullOrWhiteSpace(Model.PaginationViewModel.SortOrder))
+                    {
+                        <a asp-page="/Index" asp-route-sortOrder="IdDescend"
+                           asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
+                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+                            @Html.DisplayNameFor(model => model.Tweets[0].Id)
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-page="/Index" asp-route-sortOrder="@string.Empty"
+                           asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
+                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+                            @Html.DisplayNameFor(model => model.Tweets[0].Id)
+                        </a>
+                    }
+                </th>
+                <th>
+                    @if (Model.PaginationViewModel.SortOrder == "Date")
+                    {
+                        <a asp-page="/Index" asp-route-sortOrder="DateDescend"
+                           asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
+                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+                            @Html.DisplayNameFor(model => model.Tweets[0].Stamp)
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-page="/Index" asp-route-sortOrder="Date"
+                           asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
+                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+                            @Html.DisplayNameFor(model => model.Tweets[0].Stamp)
+                        </a>
+                    }
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Tweets[0].Text)
+                </th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.PaginationViewModel.ViewableItems)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Id)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Stamp)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Text)
+                    </td>
+                    
+                </tr>
+            }
+            </tbody>
+        </table>
+        
+        string previousDisabled = Model.PaginationViewModel.ShowingFirstPage ? "disabled" : "";
+        string nextDisabled = Model.PaginationViewModel.ShowingLastPage ? "disabled" : "";
+        
+
+        <a asp-page="/Index" asp-page-handler="ShowPrevious" 
+           asp-route-pg="@Model.PaginationViewModel.StartIndex"
+           asp-route-showSearch="@Model.PaginationViewModel.ShowSearch"
+           asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
+           asp-route-sortOrder="@Model.PaginationViewModel.SortOrder"
+           class="btn btn-default @previousDisabled">Previous</a>
+
+        <a asp-page="/Index" asp-page-handler="ShowNext" 
+           asp-route-pg="@Model.PaginationViewModel.StartIndex"
+           asp-route-showSearch="@Model.PaginationViewModel.ShowSearch"
+           asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
+           asp-route-sortOrder="@Model.PaginationViewModel.SortOrder"
+           class="btn btn-default @nextDisabled">Next</a>
+        
+
+    }
+    else
+    {
+        <p>No messages have been imported yet.</p>
+    }
+</div>
