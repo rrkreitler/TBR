@@ -9,15 +9,16 @@ namespace TweetBrowser.Pages
 {
     public class ErrorModel : PageModel
     {
-        public string RequestId { get; set; }
         public string Message { get; set; }
-
-        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
 
         public void OnGet(string message)
         {
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+            if (String.IsNullOrWhiteSpace(message))
+            {
+                message = "Sorry, there was a problem processing that request.";
+            }
             Message = message;
         }
+
     }
 }

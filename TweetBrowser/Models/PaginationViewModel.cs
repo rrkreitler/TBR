@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using TweetBrowser.Services;
 
 namespace TweetBrowser.Models
 {
-    // This class provides the paginated view of the items in th elcoal data store.
+    // This class provides the paginated view of the items in the local data store.
     // It keeps track of all the parameters needed to persist the view state
     // each time the page is updated.
     public class PaginationViewModel
@@ -17,15 +18,24 @@ namespace TweetBrowser.Models
         private int _totalItems;
 
 
-        public PaginationViewModel(ITweetBrowserData dbContext, int pageSize)
+        public PaginationViewModel(ITweetBrowserData dbContext, IConfiguration configuration)
         {
             _dbContext = dbContext;
             _viewableItems = new List<Tweet>();
-            PageSize = pageSize;
             SearchFilter = String.Empty;
             SortOrder = "";
             _totalItems = _dbContext.AllItems.Count;
             StartIndex = 0;
+            // Get default page from configuration in appsettings.json
+            if (int.TryParse(configuration["PageSize"], out var pageSize))
+            {
+                PageSize = pageSize;
+            }
+            else
+            {
+                // If setting is not found set default to 25.
+                PageSize = 25;
+            }
         }
 
         public int PageSize { get; set; }
@@ -36,8 +46,6 @@ namespace TweetBrowser.Models
         public bool ShowingLastPage => (_totalItems - 1) - StartIndex < PageSize;
         public bool ShowSearch { get; set; }
         public int StartIndex { get; set; }
-
-        
 
         private int EndIndex
         {
@@ -61,7 +69,7 @@ namespace TweetBrowser.Models
         }
 
         
-
+        // Increment the index for the next page.
         public void ShowNext()
         {
             if (!ShowingLastPage)
@@ -71,6 +79,7 @@ namespace TweetBrowser.Models
             GetQueryItems();
         }
 
+        // Decrement the index for the previous page.
         public void ShowPrevious()
         {
             if (!ShowingFirstPage)
@@ -111,10 +120,10 @@ namespace TweetBrowser.Models
 
                 _totalItems = queryResult.Count();
                 
-                // Sort items 
+                // Sort items.
                 queryResult= SortViewableList(queryResult);
                 
-                // Select items for the current view
+                // Select items for the current view.
                 SelectViewableItems(queryResult);
             }
 
@@ -122,13 +131,14 @@ namespace TweetBrowser.Models
 
         private void SelectViewableItems(IQueryable<Tweet> queryResult)
         {
-            // Select viewable range
+            // Select the items in the viewable range.
             _viewableItems = new List<Tweet>();
             for (int i = StartIndex; i <= EndIndex; i++)
             {
                 _viewableItems.Add(queryResult.ElementAt(i));
             }
         }
+
 
         private IQueryable<Tweet> SortViewableList( IQueryable<Tweet> queryResult)
         {

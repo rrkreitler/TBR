@@ -6,14 +6,15 @@ using TweetBrowser.Models;
 
 namespace TweetBrowser.Services
 {
+    // This class provides a simple in-memory datastore for 
+    // use in the demo application. The ITweetBrowserData interface
+    // is used so this module can be replaced if need be and to
+    // faciliate testing via IOC.
     public class TweetBrowserVirtualDataStore : ITweetBrowserData
     {
+        // Main collection of item in the data store.
+        // This is essentially the dbSet for tweets if EF were being used.
         public List<Tweet> AllItems { get; } = new List<Tweet>();
-
-        public TweetBrowserVirtualDataStore()
-        {
-            //AllItems = TestData();
-        }
 
         public Tweet Add(Tweet newItem)
         {
@@ -23,46 +24,11 @@ namespace TweetBrowser.Services
                 AllItems.Add(newItem);
                 return newItem;
             }
-            //throw new Exception("Cannot add item. Id already exists in data store.");
+            // For performance reasons this returns a null value if 
+            // there is an attempt to add a duplicate item.
+            // An exception could be thrown here to simulate a duplicate
+            // key error that would normally come from an ORM.
             return null;
         }
-
-        private List<Tweet> TestData()
-        {
-            List<Tweet> testData = new List<Tweet>();
-            Random rnd = new Random();
-            int id = rnd.Next(100, 200);
-            for (int y = 2016; y < 2019; y++)
-            {
-                for (int m = 1; m < 13; m++)
-                {
-                    int day = rnd.Next(1, 28);
-                    string txt;
-                    try
-                    {
-                        txt = text.Substring(rnd.Next(0, text.Length / 2), rnd.Next(0, text.Length / 2));
-                    }
-                    catch
-                    {
-                        txt = "Some text here";
-                    }
-
-
-                    Tweet tweet = new Tweet()
-                    {
-                        Id = id.ToString(),
-                        Stamp = Convert.ToDateTime(y + "-" + m + "-" + day + " " + DateTime.Now.ToShortTimeString())
-                            .ToString(),
-                        Text = txt
-                    };
-                    testData.Add(tweet);
-                    id += rnd.Next(1, 25);
-                }
-            }
-
-            return testData;
-        }
-
-        private string text = "Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of de Finibus Bonorum et Malorum (The Extremes of Good and Evil) by Cicero, written in 45 BC.";
     }
 }

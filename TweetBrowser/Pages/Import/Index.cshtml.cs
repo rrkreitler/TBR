@@ -11,6 +11,17 @@ using TweetBrowser.Services;
 
 namespace TweetBrowser.Pages.Import
 {
+    // This is the Import page. This page allows users to 
+    // input dates and send queries to a remote site
+    // (URL in the appsettings.json file and accessed via
+    // the configuration object in the IOC container).
+    // Users have two options: INSPECT, which allows them
+    // to see how many records will be returned with their 
+    // query, and IMPORT which performs the query and copies
+    // any records returned into the local data store.
+    // Incoming records are checked and any duplicates are 
+    // ignored so the local data store only contains unique
+    // items.
     public class IndexModel : PageModel
     {
         private readonly ITweetBrowserData _dbContext;
@@ -26,37 +37,42 @@ namespace TweetBrowser.Pages.Import
 
         public IList<Tweet> Tweets { get; set; }
         public string Status { get; set; }
-
         public bool ShowImport { get; set; } = false;
+
         [BindProperty]
         [Display(Name = "Select Start Date")]
-        [DataType(DataType.Date, ErrorMessage="This must be a valid date")]
+        [DataType(DataType.Date)]
         public DateTime StartDate { get; set; }
+
         [BindProperty]
         [Display(Name = "Start Time")]
         [DataType(DataType.Time)]
         public DateTime StartTime { get; set; }
+
         [BindProperty]
         [Display(Name = "Select End Date")]
         [DataType(DataType.Date)]
         public DateTime EndDate { get; set; }
+
         [BindProperty]
         [Display(Name = "End Time")]
         [DataType(DataType.Time)]
         public DateTime EndTime { get; set; }
-
-
+        
+        // Default Action.
         public void OnGet()
         {
             ShowImport = true;
             Tweets = _dbContext.AllItems;
+            Status = string.Empty;
+            // Set default time values for the import screen.
             StartDate = DateTime.Now;
             EndDate = DateTime.Now;
             StartTime = Convert.ToDateTime("00:00:00 AM");
             EndTime = Convert.ToDateTime("00:00:00 AM");
-            Status = string.Empty;
         }
 
+        // Action for the INSPECT button.
         [ValidateAntiForgeryToken]
         public IActionResult OnPostInspectAsync()
         {
@@ -65,8 +81,17 @@ namespace TweetBrowser.Pages.Import
                 return Page();
             }
 
-            IEnumerable<Tweet> tweets = RetrieveDataFromRemoteSite();
-
+            // Query the remote site.
+            IEnumerable<Tweet> tweets = null;
+            try
+            {
+                tweets = RetrieveDataFromRemoteSite();
+            }
+            catch (Exception e)
+            {
+                return RedirectToPage("/Error", "", new { message = e.Message });
+            }
+            // Update status on page.
             if (tweets == null || !tweets.Any())
             {
                 Status = "Items found: 0";
@@ -79,6 +104,7 @@ namespace TweetBrowser.Pages.Import
             return Page();
         }
 
+        // Action for the IMPORT button.
         [ValidateAntiForgeryToken]
         public IActionResult OnPostImportAsync()
         {
@@ -87,6 +113,7 @@ namespace TweetBrowser.Pages.Import
                 return Page();
             }
 
+            // Query the remote site.
             IEnumerable<Tweet> tweets = null;
             try
             {
@@ -94,10 +121,10 @@ namespace TweetBrowser.Pages.Import
             }
             catch (Exception e)
             {
-                string msg = e.Message;
-                return RedirectToPage("/Error", e.Message);
+                return RedirectToPage("/Error","",new {message = e.Message});
             }
 
+            // Update the status on the page.
             if (tweets == null || !tweets.Any())
             {
                 Status = "Items imported: 0 - No items were found.";
@@ -110,6 +137,7 @@ namespace TweetBrowser.Pages.Import
 
                 foreach (var tweet in tweets)
                 {
+                    // Errors here will be the result of attempting to add duplicate Id's.
                     try
                     {
                         if (_dbContext.Add(tweet) == null)
@@ -119,12 +147,16 @@ namespace TweetBrowser.Pages.Import
                     }
                     catch
                     {
-                        // Errors here will be the result of attempting to add duplicate Id's.
-                        // This prevents duplicate objects in the data store. 
+                        // Normally this would catch concurrency errors and duplicate key
+                        // errors from the ORM/database being used on the backend. This demo uses
+                        // a simple in-memory collection as the local data store that does not
+                        // throw an exception when a duplicate is found, instead it returns a null
+                        // object (this improves performance). This counts the nulls returned to 
+                        // track dupes.
                         duplicatesFound++;
                     }
                 }
-
+                // Update status on page with import summary.
                 Status = "Items imported: " + (_dbContext.AllItems.Count - count);
                 if (duplicatesFound == 0)
                 {
@@ -141,12 +173,33 @@ namespace TweetBrowser.Pages.Import
 
         private IEnumerable<Tweet> RetrieveDataFromRemoteSite()
         {
-            DateTime fullStartDate = Convert.ToDateTime(StartDate.ToShortDateString() + " " + StartTime.ToShortTimeString());
-            DateTime fullEndDate = Convert.ToDateTime(EndDate.ToShortDateString() + " " + EndTime.ToShortTimeString());
+            try
+            {
+                DateTime fullStartDate =
+                    Convert.ToDateTime(StartDate.ToShortDateString() + " " + StartTime.ToShortTimeString());
+                DateTime fullEndDate =
+                    Convert.ToDateTime(EndDate.ToShortDateString() + " " + EndTime.ToShortTimeString());
 
-            // Retrieve items from remote archive
-            //return _remoteDataSrc.GetItemsFromUrl(_configuration["RemoteDataUri"], fullStartDate, fullEndDate);
-            return _remoteDataSrc.GetItemsFromUrl("RemoteDataUri", fullStartDate, fullEndDate);
+                // Retrieve items from the remote archive with the URL in the appsettings.json file.
+                return _remoteDataSrc.GetItemsFromUrl(_configuration["RemoteDataUri"], fullStartDate, fullEndDate);
+
+            }
+            catch (TweetWebApiException te)
+            {
+                // This exception is thrown because too many records are being returned
+                // in each query after the remote data client has throttled back as far as it can
+                // go. Records may be being lost.
+                throw new Exception(te.Message + " It is recommended you try accessing the data using a different means.");
+            }
+            catch (Exception ex)
+            {
+                // Dates are validated before being submitted so if an error occurs at this
+                // point it will be a problem with the url in the appsettings.json file
+                // or with general connectivity to the remote site itself.
+                throw new Exception(
+                    "There is a problem accessing the remote site. Make sure that the URL is correct in the appsettings file and that the remote site is online and then try again.");
+            }
+            
         }
     }
 }

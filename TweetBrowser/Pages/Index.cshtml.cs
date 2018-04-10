@@ -12,14 +12,18 @@ using TweetBrowser.Services;
 
 namespace TweetBrowser.Pages
 {
+    // This is the the default page for the application. 
+    // This is where users can view the items in the local data store.
+    // A search option allows some basic filtering and the list
+    // of items can be sorted by Id or by date.
     public class IndexModel : PageModel
     {
         private readonly ITweetBrowserData _dbContext;
 
-        public IndexModel(ITweetBrowserData dbContext )
+        public IndexModel(ITweetBrowserData dbContext, IConfiguration configuration )
         {
             _dbContext = dbContext;
-            PaginationViewModel = new PaginationViewModel(_dbContext,25);
+            PaginationViewModel = new PaginationViewModel(_dbContext,configuration);
         }
 
         public bool LocalDataExists => _dbContext.AllItems.Any();
@@ -74,6 +78,10 @@ namespace TweetBrowser.Pages
 
         // Toggles the Search option off and on in the menu bar
         // based on whether or not there are records available to search.
+        // The search button in the menu bar toggles the ShowSearch
+        // property on the PaginationViewModel. This is a bool value
+        // used to show/hide the SearchPartial partial view that 
+        // renders the Search options on the main page.
         private void ToggleSearchMenu()
         {
             if (LocalDataExists)

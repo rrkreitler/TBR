@@ -11,11 +11,28 @@ using TweetBrowser.Models;
 
 namespace TweetBrowser.Services
 {
+    // This class is an http client used to retrieve data from a remote
+    // site. A request for data will contain the url for the remote site
+    // and a start and end date/time for the range of records to be returned.
+    // NOTE: The remote API being called for this demo has a limitation.
+    // It can only return up to a max of 100 records per request. 
+    // If the query results in more than 100 records, the API will only
+    // return the first 100 and ignore the rest. No notification of any
+    // kind will be sent to inidicate records were ignored.
     public class TweetDataClient : IDataImport
     {
         private readonly HttpClient client = new HttpClient();
         private TimeSpan _maxTimeSpan;
 
+        // This method is used to submit a request to the client.
+        public IEnumerable<Tweet> GetItemsFromUrl(string url, DateTime startDate, DateTime endDate)
+        {
+            IEnumerable<Tweet> tweets = RunAsync(url, startDate, endDate).GetAwaiter().GetResult();
+            return tweets;
+        }
+
+        // This task sends a request to the remote site.
+        // The response is a json object that maps to a collection of Tweet objects.
         private async Task<ICollection<Tweet>> GetTweetsAsync(string path)
         {
             ICollection<Tweet> tweets = null;
@@ -27,76 +44,70 @@ namespace TweetBrowser.Services
             return tweets;
         }
 
+        // This method builds a query based on start and end date/times. 
+        // It then submits the query. If 100 records are returned, it
+        // breaks the query into mulitple smaller queries and resubmits.
         private async Task<IEnumerable<Tweet>> RunAsync(string uriString, DateTime startDate, DateTime maxDate)
         {
+            // Set the initial timespan to the original start and end date/times.
             DateTime endDate = maxDate;
             _maxTimeSpan = endDate.Subtract(startDate);
             
+            // Build the header.
             if (client.BaseAddress == null)
             {
-                // client.BaseAddress = new Uri("https://badapi.iqvia.io/");
                 client.BaseAddress = new Uri(uriString);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
             }
+            
+            // Build the query.
+            List<Tweet> allTweets = new List<Tweet>();
+            bool doneQuerying = false;
 
-            try
+            while (!doneQuerying)
             {
-                List<Tweet> allTweets = new List<Tweet>();
-                bool doneQuerying = false;
+                UriBuilder uriBuilder = new UriBuilder(uriString);
+                uriBuilder.Port = -1;
+                uriBuilder.Query = "startDate=" + startDate.ToString() + "&endDate=" + endDate.ToString();
+                Uri uri = new Uri(uriBuilder.ToString());
 
-                while (!doneQuerying)
+                // Get the tweets.
+                IEnumerable<Tweet> tweets = null;
+                tweets = await GetTweetsAsync(uri.PathAndQuery);
+
+                // Check to see if the Tweet API's 100 record limit was reached.
+                if (!MaxRecordsExceeded(tweets))
                 {
-                    UriBuilder uriBuilder = new UriBuilder(uriString);
-                    uriBuilder.Port = -1;
-                    uriBuilder.Query = "startDate=" + startDate.ToString() + "&endDate=" + endDate.ToString();
-                    Uri uri = new Uri(uriBuilder.ToString());
-
-                    // Get the tweets
-                    IEnumerable<Tweet> tweets = null;
-                    tweets = await GetTweetsAsync(uri.PathAndQuery);
-
-                    // Check to see if the Tweet API's 100 record limit was reached.
-                    if (!MaxRecordsExceeded(tweets))
+                    allTweets.AddRange(tweets);
+                    doneQuerying = endDate == maxDate;
+                    if (!doneQuerying)
                     {
-                        allTweets.AddRange(tweets);
-                        doneQuerying = endDate == maxDate;
-                        if (!doneQuerying)
-                        {
-                                startDate = IncrementDate(startDate, maxDate);
-                                endDate = IncrementDate(endDate, maxDate);
-                        }
-                    }
-                    else
-                    {
-                        // Adjust endDate based on new _maxTimespan
-                        endDate = IncrementDate(startDate, maxDate);
-                        Debug.WriteLine("===============================================================");
-                        Debug.WriteLine("StartDate: " + startDate + "   EndDate: " + endDate + "   Interval: " + _maxTimeSpan.TotalDays);
-                        Debug.WriteLine("===============================================================");
+                            startDate = IncrementDate(startDate, maxDate);
+                            endDate = IncrementDate(endDate, maxDate);
                     }
                 }
-                
-                return allTweets;
-
+                else
+                {
+                    // Adjust endDate based on new _maxTimespan and resubmit the query
+                    endDate = IncrementDate(startDate, maxDate);
+                    Debug.WriteLine("===============================================================");
+                    Debug.WriteLine("StartDate: " + startDate + "   EndDate: " + endDate + "   Interval: " + _maxTimeSpan.TotalDays);
+                    Debug.WriteLine("===============================================================");
+                }
             }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.Message);
-            }
-
-            return null;
+            return allTweets;
         }
 
-        string span = "Default";
         private bool MaxRecordsExceeded(IEnumerable<Tweet> tweets)
         {
             // If 100 records were returned it is likely the Tweet API's 100 record
             // limitation was reached. This reduces the timespan of the query
             // to reduce the number of records returned to be less than 100. 
-            // It then submits mulitple queries until the entire time span of the orignal
-            // query has been processed.
+            // Note: In this version it always starts at max and then throttles down.
+            // No attempt is made to throttle back up again.
+            string span = "Default";
             Debug.WriteLine("===============================================================");
             Debug.WriteLine("Count: " + tweets.Count() + "   Span:" + span);
             Debug.WriteLine("===============================================================");
@@ -138,13 +149,12 @@ namespace TweetBrowser.Services
                     // performance will be so bad another solution should be considered.
                     throw new TweetWebApiException("Unrealiable host data. Records may be missing.");
                 }
-
                 return true;
             }
-
             return false;
         }
 
+        // Increments the date for the next query.
         private DateTime IncrementDate(DateTime date, DateTime maxDate)
         {
             if (date + _maxTimeSpan > maxDate)
@@ -154,14 +164,9 @@ namespace TweetBrowser.Services
 
             return date + _maxTimeSpan;
         }
-
-        public IEnumerable<Tweet> GetItemsFromUrl(string url, DateTime startDate, DateTime endDate)
-        {
-            IEnumerable<Tweet> tweets = RunAsync(url, startDate, endDate).GetAwaiter().GetResult();
-            return tweets;
-        }
     }
 
+    // Extension used to support async reading of json objects in Core 2.0.
     public static class HttpContentExtensions
     {
         public static async Task<T> ReadAsJsonAsync<T>(this HttpContent content)
@@ -172,11 +177,9 @@ namespace TweetBrowser.Services
         }
     }
 
+    // Exception used to indicate the timespan has been reduced too many times.
     public class TweetWebApiException : Exception
     {
-        public TweetWebApiException(string message) : base(message)
-        {
-
-        }
+        public TweetWebApiException(string message) : base(message) { }
     }
 }
