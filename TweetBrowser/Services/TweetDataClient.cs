@@ -117,7 +117,13 @@ namespace TweetBrowser.Services
 
             if (tweets.Count() >= 100)
             {
-                if (_maxTimeSpan > TimeSpan.FromDays(3))
+                if (_maxTimeSpan > TimeSpan.FromDays(6))
+                {
+                    int days = _maxTimeSpan.Days / 2;
+                    _maxTimeSpan = TimeSpan.FromDays(days);
+                    span = days + " days";
+                }
+                else if (_maxTimeSpan > TimeSpan.FromDays(3))
                 {
                     _maxTimeSpan = TimeSpan.FromDays(3);
                     span = "3 days";
