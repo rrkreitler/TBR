@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using TweetBrowser.Models;
 
@@ -21,8 +22,14 @@ namespace TweetBrowser.Services
     // kind will be sent to inidicate records were ignored.
     public class TweetDataClient : IDataImport
     {
+        private readonly ILogger _logger;
         private readonly HttpClient client = new HttpClient();
         private TimeSpan _maxTimeSpan;
+
+        public TweetDataClient(ILogger<TweetDataClient> logger)
+        {
+            _logger = logger;
+        }
 
         // This method is used to submit a request to the client.
         public IEnumerable<Tweet> GetItemsFromUrl(string url, DateTime startDate, DateTime endDate)
@@ -52,7 +59,7 @@ namespace TweetBrowser.Services
             // Set the initial timespan to the original start and end date/times.
             DateTime endDate = maxDate;
             _maxTimeSpan = endDate.Subtract(startDate);
-            
+            _logger.LogInformation("Begin remote query to {url}  TimeSpan={span} days",uriString,_maxTimeSpan.TotalDays);
             // Build the header.
             if (client.BaseAddress == null)
             {
@@ -75,6 +82,7 @@ namespace TweetBrowser.Services
 
                 // Get the tweets.
                 IEnumerable<Tweet> tweets = null;
+                _logger.LogInformation("Query request: StartDate: {start}  EndDate: {end}", startDate, endDate);
                 tweets = await GetTweetsAsync(uri.PathAndQuery);
 
                 // Check to see if the Tweet API's 100 record limit was reached.
@@ -92,11 +100,9 @@ namespace TweetBrowser.Services
                 {
                     // Adjust endDate based on new _maxTimespan and resubmit the query
                     endDate = IncrementDate(startDate, maxDate);
-                    Debug.WriteLine("===============================================================");
-                    Debug.WriteLine("StartDate: " + startDate + "   EndDate: " + endDate + "   Interval: " + _maxTimeSpan.TotalDays);
-                    Debug.WriteLine("===============================================================");
                 }
             }
+            _logger.LogInformation("Remote query to {url} completed successfully", uriString);
             return allTweets;
         }
 
@@ -108,9 +114,7 @@ namespace TweetBrowser.Services
             // Note: In this version it always starts at max and then throttles down.
             // No attempt is made to throttle back up again.
             string span = "Default";
-            Debug.WriteLine("===============================================================");
-            Debug.WriteLine("Count: " + tweets.Count() + "   Span:" + span);
-            Debug.WriteLine("===============================================================");
+
             if (tweets.Count() >= 100)
             {
                 if (_maxTimeSpan > TimeSpan.FromDays(3))
@@ -147,8 +151,10 @@ namespace TweetBrowser.Services
                 {
                     // Timespan could be throttled even further but at this point
                     // performance will be so bad another solution should be considered.
+                    _logger.LogError("Query result > 100 records and minimum timespan has been reached.");
                     throw new TweetWebApiException("Unrealiable host data. Records may be missing.");
                 }
+                _logger.LogInformation("Query result > 100 records. Reduce timespan to {span}", span);
                 return true;
             }
             return false;

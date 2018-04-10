@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Isam.Esent.Interop;
 using TweetBrowser.Models;
 using TweetBrowser.Services;
 
@@ -27,12 +29,14 @@ namespace TweetBrowser.Pages.Import
         private readonly ITweetBrowserData _dbContext;
         private readonly IDataImport _remoteDataSrc;
         private readonly IConfiguration _configuration;
+        private readonly ILogger _logger;
 
-        public IndexModel(ITweetBrowserData dbContext, IDataImport remoteDataSrc, IConfiguration configuration)
+        public IndexModel(ITweetBrowserData dbContext, IDataImport remoteDataSrc, IConfiguration configuration, ILogger<IndexModel> logger)
         {
             _dbContext = dbContext;
             _remoteDataSrc = remoteDataSrc;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public IList<Tweet> Tweets { get; set; }
@@ -189,6 +193,7 @@ namespace TweetBrowser.Pages.Import
                 // This exception is thrown because too many records are being returned
                 // in each query after the remote data client has throttled back as far as it can
                 // go. Records may be being lost.
+                _logger.LogError(te, "Query request to remote site: {url} possibly missing data", _configuration["RemoteDataUri"]);
                 throw new Exception(te.Message + " It is recommended you try accessing the data using a different means.");
             }
             catch (Exception ex)
@@ -196,6 +201,7 @@ namespace TweetBrowser.Pages.Import
                 // Dates are validated before being submitted so if an error occurs at this
                 // point it will be a problem with the url in the appsettings.json file
                 // or with general connectivity to the remote site itself.
+                _logger.LogWarning(ex, "Query request to remote site: {url} connection problem", _configuration["RemoteDataUri"]);
                 throw new Exception(
                     "There is a problem accessing the remote site. Make sure that the URL is correct in the appsettings file and that the remote site is online and then try again.");
             }
