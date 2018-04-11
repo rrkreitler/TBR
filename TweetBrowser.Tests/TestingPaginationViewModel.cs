@@ -130,6 +130,20 @@ namespace TweetBrowser.Tests
             Assert.That(sut.ViewableItems.Count.Equals(15));
         }
 
+
+        [Test]
+        public void ShowAllAddsAllItemsToViewableList()
+        {
+            // Arrange
+            PaginationViewModel sut = new PaginationViewModel(MockDbContext(35), _mockConfig);
+            sut.ShowAll = true;
+            
+            // Act
+            sut.GetQueryItems();
+
+            Assert.That(sut.ViewableItems.Count.Equals(35));
+        }
+
         // Test Search impact on ViewableList
         [Test]
         public void SearchReturnsEmptyListIfNoItemsFound()

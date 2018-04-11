@@ -26,6 +26,7 @@ namespace TweetBrowser.Models
             SortOrder = "";
             _totalItems = _dbContext.AllItems.Count;
             StartIndex = 0;
+            ShowAll = false;
             // Get default page from configuration in appsettings.json
             if (int.TryParse(configuration["PageSize"], out var pageSize))
             {
@@ -45,6 +46,7 @@ namespace TweetBrowser.Models
         public bool ShowingFirstPage => StartIndex == 0;
         public bool ShowingLastPage => (_totalItems - 1) - StartIndex < PageSize;
         public bool ShowSearch { get; set; }
+        public bool ShowAll { get; set; }
         public int StartIndex { get; set; }
 
         private int EndIndex
@@ -131,8 +133,17 @@ namespace TweetBrowser.Models
 
         private void SelectViewableItems(IQueryable<Tweet> queryResult)
         {
+            if (ShowAll)
+            {
+                StartIndex = 0;
+                PageSize = queryResult.Count();
+                _viewableItems = queryResult.ToList();
+                return;
+            }
+
             // Select the items in the viewable range.
             _viewableItems = new List<Tweet>();
+
             for (int i = StartIndex; i <= EndIndex; i++)
             {
                 _viewableItems.Add(queryResult.ElementAt(i));

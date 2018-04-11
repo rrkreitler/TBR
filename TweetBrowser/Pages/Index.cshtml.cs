@@ -31,7 +31,7 @@ namespace TweetBrowser.Pages
         public PaginationViewModel PaginationViewModel { get; private set; }
         
         // Default view
-        public void OnGetAsync(string sortOrder,string searchString, bool searchVisible)
+        public void OnGetAsync(string sortOrder,string searchString, bool searchVisible, bool showAll)
         {
             // Shows and hides the search controls
             ToggleSearchMenu();
@@ -39,6 +39,7 @@ namespace TweetBrowser.Pages
             PaginationViewModel.ShowSearch = searchVisible;
             PaginationViewModel.SearchFilter = searchString;
             PaginationViewModel.SortOrder = sortOrder;
+            PaginationViewModel.ShowAll = showAll;
 
             if (LocalDataExists)
             {

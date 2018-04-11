@@ -6,7 +6,7 @@
 }
 <div class="row">
     <div class="col-md-6 desc-text">
-        <p>Welcome to TweetBrowser. This application allows you to download messages from a Twitter archive. Once downloaded, you can browse the list using a variety of filter and search options.</p>
+        <p>Welcome to TweetBrowser. This application allows you to download messages from a Twitter archive. Once downloaded, you can browse the list using sort and search options.</p>
     </div>
     <div class="col-md-6 desc-text">
         @if (Model.PaginationViewModel.ShowSearch)
@@ -19,11 +19,29 @@
     <h2>Messages</h2>
     @if (Model.LocalDataExists)
     {
-        <div >
-            Showing @Model.PaginationViewModel.Range[0] - 
-            @Model.PaginationViewModel.Range[1] of  
-            @Model.PaginationViewModel.Range[2] items.
-        </div>
+    <div>
+        Showing @Model.PaginationViewModel.Range[0] -
+        @Model.PaginationViewModel.Range[1] of
+        @Model.PaginationViewModel.Range[2] items.
+        @if (Model.PaginationViewModel.ShowAll)
+        {
+            <a class="btn btn-default btn-thin" 
+               asp-page="/Index" asp-route-showAll="@false"
+               asp-route-sortOrder="@Model.PaginationViewModel.SortOrder"
+               asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
+               asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+               Show Pages</a>
+        }
+        else
+        {
+            <a class="btn btn-default btn-thin" 
+               asp-page="/Index" asp-route-showAll="@true"
+               asp-route-sortOrder="@Model.PaginationViewModel.SortOrder"
+               asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
+               asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch"
+               >Show All</a>
+        }
+    </div>
 
         <table class="table">
             <thead>
@@ -33,7 +51,8 @@
                     {
                         <a asp-page="/Index" asp-route-sortOrder="IdDescend"
                            asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
-                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch"
+                           asp-route-showAll="@Model.PaginationViewModel.ShowAll">
                             @Html.DisplayNameFor(model => model.Tweets[0].Id)
                         </a>
                     }
@@ -41,7 +60,8 @@
                     {
                         <a asp-page="/Index" asp-route-sortOrder="@string.Empty"
                            asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
-                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch"
+                           asp-route-showAll="@Model.PaginationViewModel.ShowAll">
                             @Html.DisplayNameFor(model => model.Tweets[0].Id)
                         </a>
                     }
@@ -51,7 +71,8 @@
                     {
                         <a asp-page="/Index" asp-route-sortOrder="DateDescend"
                            asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
-                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch"
+                           asp-route-showAll="@Model.PaginationViewModel.ShowAll">
                             @Html.DisplayNameFor(model => model.Tweets[0].Stamp)
                         </a>
                     }
@@ -59,7 +80,8 @@
                     {
                         <a asp-page="/Index" asp-route-sortOrder="Date"
                            asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
-                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch">
+                           asp-route-searchVisible="@Model.PaginationViewModel.ShowSearch"
+                           asp-route-showAll="@Model.PaginationViewModel.ShowAll">
                             @Html.DisplayNameFor(model => model.Tweets[0].Stamp)
                         </a>
                     }
@@ -106,8 +128,6 @@
            asp-route-searchString="@Model.PaginationViewModel.SearchFilter"
            asp-route-sortOrder="@Model.PaginationViewModel.SortOrder"
            class="btn btn-default @nextDisabled">Next</a>
-        
-
     }
     else
     {
