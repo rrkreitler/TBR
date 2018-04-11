@@ -9,8 +9,8 @@ This program dynamically monitors query results and when the 100 record threshol
 ### Features
 
 #### Configuration Options
-There are two settings available in the appsettings.json file.
-`RemoteDataUri` is used to configure the Url for the remote API being tested. There is no UI option to set the URL from within the program.
+There are two settings available in the appsettings.json file.  
+`RemoteDataUri` is used to configure the URL for the remote API being tested. There is no UI option to set the URL from within the program.  
 `PageSize` limits the number of records displayed in the browser as you browse through the list. The default value is 25.
 
 #### Importing
