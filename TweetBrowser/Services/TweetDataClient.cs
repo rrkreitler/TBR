@@ -12,14 +12,14 @@ using TweetBrowser.Models;
 
 namespace TweetBrowser.Services
 {
-    // This class is an http client used to retrieve data from a remote
-    // site. A request for data will contain the url for the remote site
+    // Implements an http client to retrieve data from a remote site.
+    // A request for data will contain the url for the remote site
     // and a start and end date/time for the range of records to be returned.
     // NOTE: The remote API being called for this demo has a limitation.
     // It can only return up to a max of 100 records per request. 
     // If the query results in more than 100 records, the API will only
     // return the first 100 and ignore the rest. No notification of any
-    // kind will be sent to inidicate records were ignored.
+    // kind will be sent to indicate records were ignored.
     public class TweetDataClient : IDataImport
     {
         private readonly ILogger _logger;
@@ -59,7 +59,9 @@ namespace TweetBrowser.Services
             // Set the initial timespan to the original start and end date/times.
             DateTime endDate = maxDate;
             _maxTimeSpan = endDate.Subtract(startDate);
+
             _logger.LogInformation("Begin remote query to {url}  TimeSpan={span} days",uriString,_maxTimeSpan.TotalDays);
+            
             // Build the header.
             if (client.BaseAddress == null)
             {

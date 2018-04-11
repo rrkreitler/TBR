@@ -15,15 +15,13 @@ namespace TweetBrowser.Pages.Import
 {
     // This is the Import page. This page allows users to 
     // input dates and send queries to a remote site
-    // (URL in the appsettings.json file and accessed via
-    // the configuration object in the IOC container).
-    // Users have two options: INSPECT, which allows them
+    // (URL in the appsettings.json file).
+    // Users have two options: INSPECT, allows them
     // to see how many records will be returned with their 
     // query, and IMPORT which performs the query and copies
     // any records returned into the local data store.
-    // Incoming records are checked and any duplicates are 
-    // ignored so the local data store only contains unique
-    // items.
+    // Incoming records are checked and duplicates are 
+    // ignored.
     public class IndexModel : PageModel
     {
         private readonly ITweetBrowserData _dbContext;

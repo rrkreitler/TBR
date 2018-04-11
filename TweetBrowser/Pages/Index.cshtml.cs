@@ -20,10 +20,10 @@ namespace TweetBrowser.Pages
     {
         private readonly ITweetBrowserData _dbContext;
 
-        public IndexModel(ITweetBrowserData dbContext, IConfiguration configuration )
+        public IndexModel(ITweetBrowserData dbContext, IConfiguration configuration, PaginationViewModel pvm )
         {
             _dbContext = dbContext;
-            PaginationViewModel = new PaginationViewModel(_dbContext,configuration);
+            PaginationViewModel = pvm;
         }
 
         public bool LocalDataExists => _dbContext.AllItems.Any();

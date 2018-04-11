@@ -29,6 +29,7 @@ namespace TweetBrowser
             // If an actual database is used on the backend and full CRUD functionality added,
             // additional code will be required to deal with possible concurrency errors.
             services.AddSingleton<ITweetBrowserData, TweetBrowserVirtualDataStore>();
+            services.AddTransient<PaginationViewModel>();
             services.AddMvc();
         }
 
