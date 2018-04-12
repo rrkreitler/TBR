@@ -201,7 +201,7 @@ namespace TweetBrowser.Pages.Import
                 // or with general connectivity to the remote site itself.
                 _logger.LogWarning(ex, "Query request to remote site: {url} connection problem", _configuration["RemoteDataUri"]);
                 throw new Exception(
-                    "There is a problem accessing the remote site. Make sure that the URL is correct in the appsettings file and that the remote site is online and then try again.");
+                    "There is a problem accessing the remote site. Make sure that the URL is correct in the appsettings file and that the remote site is online and then try again.",ex);
             }
             
         }
