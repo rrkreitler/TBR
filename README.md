@@ -6,6 +6,8 @@ Specifically, the API can only respond with up to a max of 100 records. If the q
 
 This program dynamically monitors query results and when the 100 record threshold is met, it breaks the query into mulitple smaller queries and resubmits them to ensure no result set is larger than 100 records.
 
+**NOTE:** This application has a fully functioning UI. There is a command-line version of this application available in the [TBR_CL repository](https://github.com/rrkreitler/TBR_CL).
+
 ### Features
 
 #### Configuration Options
