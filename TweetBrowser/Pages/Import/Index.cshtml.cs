@@ -183,6 +183,7 @@ namespace TweetBrowser.Pages.Import
                     Convert.ToDateTime(EndDate.ToShortDateString() + " " + EndTime.ToShortTimeString());
 
                 // Retrieve items from the remote archive with the URL in the appsettings.json file.
+                //return _remoteDataSrc.GetItemsFromUrl(_configuration["RemoteDataUri"], fullStartDate, fullEndDate);
                 return _remoteDataSrc.GetItemsFromUrl(_configuration["RemoteDataUri"], fullStartDate, fullEndDate);
 
             }

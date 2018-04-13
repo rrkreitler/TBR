@@ -86,22 +86,28 @@ namespace TweetBrowser.Services
                 IEnumerable<Tweet> tweets = null;
                 _logger.LogInformation("Query request: StartDate: {start}  EndDate: {end}", startDate, endDate);
                 tweets = await GetTweetsAsync(uri.PathAndQuery);
-
-                // Check to see if the Tweet API's 100 record limit was reached.
-                if (!MaxRecordsExceeded(tweets))
+                if (tweets != null)
                 {
-                    allTweets.AddRange(tweets);
-                    doneQuerying = endDate == maxDate;
-                    if (!doneQuerying)
+                    // Check to see if the Tweet API's 100 record limit was reached.
+                    if (!MaxRecordsExceeded(tweets))
                     {
+                        allTweets.AddRange(tweets);
+                        doneQuerying = endDate == maxDate;
+                        if (!doneQuerying)
+                        {
                             startDate = IncrementDate(startDate, maxDate);
                             endDate = IncrementDate(endDate, maxDate);
+                        }
+                    }
+                    else
+                    {
+                        // Adjust endDate based on new _maxTimespan and resubmit the query
+                        endDate = IncrementDate(startDate, maxDate);
                     }
                 }
                 else
                 {
-                    // Adjust endDate based on new _maxTimespan and resubmit the query
-                    endDate = IncrementDate(startDate, maxDate);
+                    doneQuerying = true;
                 }
             }
             _logger.LogInformation("Remote query to {url} completed successfully", uriString);
